@@ -1,7 +1,7 @@
 /**
  * container.ts — raíz de composición (Composition Root).
  * Aquí y solo aquí se instancian las dependencias concretas y se conectan las capas.
- * Ninguna otra capa hace `new` de infraestructura.
+ * Ninguna otra capa hace `new` de infraestructura ni conoce las implementaciones concretas.
  */
 
 import { PrismaUserRepository } from "./infrastructure/repositories/prisma-user.repository.js";
@@ -21,14 +21,18 @@ import { CreateInscripcionUseCase } from "./application/use-cases/inscripciones/
 import { ListMyInscripcionesUseCase } from "./application/use-cases/inscripciones/list-my-inscripciones.use-case.js";
 import { ListAllInscripcionesUseCase } from "./application/use-cases/inscripciones/list-all-inscripciones.use-case.js";
 
-// Infraestructura
+import { AuthController } from "./interface/http/controllers/auth.controller.js";
+import { CursoController } from "./interface/http/controllers/curso.controller.js";
+import { InscripcionController } from "./interface/http/controllers/inscripcion.controller.js";
+
+// 1. Infraestructura
 const userRepository = new PrismaUserRepository();
 const cursoRepository = new PrismaCursoRepository();
 const inscripcionRepository = new PrismaInscripcionRepository();
 const passwordHasher = new BcryptPasswordHasher();
-const tokenService = new JwtTokenService();
+export const tokenService = new JwtTokenService();
 
-// Casos de uso — Auth
+// 2. Casos de uso — Auth
 export const registerUserUseCase = new RegisterUserUseCase(userRepository, passwordHasher);
 export const loginUserUseCase = new LoginUserUseCase(userRepository, passwordHasher, tokenService);
 
@@ -43,3 +47,18 @@ export const deleteCursoUseCase = new DeleteCursoUseCase(cursoRepository);
 export const createInscripcionUseCase = new CreateInscripcionUseCase(inscripcionRepository, cursoRepository);
 export const listMyInscripcionesUseCase = new ListMyInscripcionesUseCase(inscripcionRepository);
 export const listAllInscripcionesUseCase = new ListAllInscripcionesUseCase(inscripcionRepository);
+
+// 3. Controladores
+export const authController = new AuthController(registerUserUseCase, loginUserUseCase);
+export const cursoController = new CursoController(
+  listCursosUseCase,
+  getCursoByIdUseCase,
+  createCursoUseCase,
+  updateCursoUseCase,
+  deleteCursoUseCase
+);
+export const inscripcionController = new InscripcionController(
+  createInscripcionUseCase,
+  listMyInscripcionesUseCase,
+  listAllInscripcionesUseCase
+);

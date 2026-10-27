@@ -2,7 +2,7 @@
   "name": "backend-cursos-tecnologicos",
   "version": "1.0.0",
   "description": "API REST Full-Stack para NexTech Academy - Entrega 3 Desarrollo Web",
-  "main": "dist/interface/http/server.js",
+  "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "prisma generate && tsc",

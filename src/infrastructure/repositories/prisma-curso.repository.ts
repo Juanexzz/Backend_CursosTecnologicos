@@ -2,6 +2,10 @@ import { Prisma } from "@prisma/client";
 import { ICursoRepository, CursoFilterOptions } from "../../domain/repositories/curso.repository.interface.js";
 import { Curso } from "../../domain/entities/curso.entity.js";
 import { prisma } from "../database/prisma.client.js";
+import {
+  ConflictError,
+  NotFoundError,
+} from "../../domain/errors/domain-errors.js";
 
 export class PrismaCursoRepository implements ICursoRepository {
   async findAll(options: CursoFilterOptions): Promise<{ data: Curso[]; total: number }> {
@@ -56,48 +60,79 @@ export class PrismaCursoRepository implements ICursoRepository {
   }
 
   async create(cursoData: Omit<Curso, "id" | "createdAt" | "updatedAt">): Promise<Curso> {
-    return prisma.curso.create({
-      data: {
-        titulo: cursoData.titulo,
-        slug: cursoData.slug,
-        categoria: cursoData.categoria,
-        categoriaNombre: cursoData.categoriaNombre,
-        nivel: cursoData.nivel,
-        duracionHoras: cursoData.duracionHoras,
-        precio: cursoData.precio,
-        calificacion: cursoData.calificacion,
-        totalResenas: cursoData.totalResenas,
-        estudiantes: cursoData.estudiantes,
-        instructorNombre: cursoData.instructorNombre,
-        instructorEspecialidad: cursoData.instructorEspecialidad,
-        instructorAvatar: cursoData.instructorAvatar,
-        instructorBio: cursoData.instructorBio,
-        destacado: cursoData.destacado,
-        imagen: cursoData.imagen,
-        tecnologias: cursoData.tecnologias,
-        descripcionCorta: cursoData.descripcionCorta,
-        descripcionLarga: cursoData.descripcionLarga,
-        requisitos: cursoData.requisitos,
-        temario: cursoData.temario
+    try {
+      return await prisma.curso.create({
+        data: {
+          titulo: cursoData.titulo,
+          slug: cursoData.slug,
+          categoria: cursoData.categoria,
+          categoriaNombre: cursoData.categoriaNombre,
+          nivel: cursoData.nivel,
+          duracionHoras: cursoData.duracionHoras,
+          precio: cursoData.precio,
+          calificacion: cursoData.calificacion,
+          totalResenas: cursoData.totalResenas,
+          estudiantes: cursoData.estudiantes,
+          instructorNombre: cursoData.instructorNombre,
+          instructorEspecialidad: cursoData.instructorEspecialidad,
+          instructorAvatar: cursoData.instructorAvatar,
+          instructorBio: cursoData.instructorBio,
+          destacado: cursoData.destacado,
+          imagen: cursoData.imagen,
+          tecnologias: cursoData.tecnologias,
+          descripcionCorta: cursoData.descripcionCorta,
+          descripcionLarga: cursoData.descripcionLarga,
+          requisitos: cursoData.requisitos,
+          temario: cursoData.temario,
+        },
+      });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError) {
+        if (err.code === "P2002") {
+          throw new ConflictError("Ya existe un curso con ese slug", [
+            { field: "slug", message: "El slug proporcionado ya está en uso" },
+          ]);
+        }
       }
-    });
+      throw err;
+    }
   }
 
   async update(id: number, cursoData: Partial<Omit<Curso, "id" | "createdAt" | "updatedAt">>): Promise<Curso | null> {
-    const existing = await prisma.curso.findUnique({ where: { id } });
-    if (!existing) return null;
-
-    return prisma.curso.update({
-      where: { id },
-      data: cursoData
-    });
+    try {
+      const existing = await prisma.curso.findUnique({ where: { id } });
+      if (!existing) return null;
+      return await prisma.curso.update({ where: { id }, data: cursoData });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError) {
+        if (err.code === "P2025") throw new NotFoundError("Curso no encontrado");
+        if (err.code === "P2002") {
+          throw new ConflictError("Ya existe un curso con ese slug", [
+            { field: "slug", message: "El slug proporcionado ya está en uso" },
+          ]);
+        }
+      }
+      throw err;
+    }
   }
 
   async delete(id: number): Promise<boolean> {
-    const existing = await prisma.curso.findUnique({ where: { id } });
-    if (!existing) return false;
-
-    await prisma.curso.delete({ where: { id } });
-    return true;
+    try {
+      const existing = await prisma.curso.findUnique({ where: { id } });
+      if (!existing) return false;
+      await prisma.curso.delete({ where: { id } });
+      return true;
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError) {
+        if (err.code === "P2025") throw new NotFoundError("Curso no encontrado");
+        if (err.code === "P2003") {
+          throw new ConflictError(
+            "No se puede eliminar el curso porque tiene inscripciones activas",
+            [{ field: "cursoId", message: "Elimina primero las inscripciones asociadas" }]
+          );
+        }
+      }
+      throw err;
+    }
   }
 }

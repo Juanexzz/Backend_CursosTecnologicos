@@ -1,6 +1,11 @@
+import { Prisma } from "@prisma/client";
 import { IInscripcionRepository } from "../../domain/repositories/inscripcion.repository.interface.js";
 import { Inscripcion } from "../../domain/entities/inscripcion.entity.js";
 import { prisma } from "../database/prisma.client.js";
+import {
+  ConflictError,
+  NotFoundError,
+} from "../../domain/errors/domain-errors.js";
 
 export class PrismaInscripcionRepository implements IInscripcionRepository {
   async findByUserAndCurso(userId: number, cursoId: number): Promise<Inscripcion | null> {
@@ -24,20 +29,37 @@ export class PrismaInscripcionRepository implements IInscripcionRepository {
     nivel: string;
     motivacion: string;
   }): Promise<Inscripcion> {
-    const record = await prisma.inscripcion.create({
-      data: {
-        userId: data.userId,
-        cursoId: data.cursoId,
-        telefono: data.telefono,
-        nivel: data.nivel,
-        motivacion: data.motivacion
-      },
-      include: {
-        curso: true
+    try {
+      const record = await prisma.inscripcion.create({
+        data: {
+          userId: data.userId,
+          cursoId: data.cursoId,
+          telefono: data.telefono,
+          nivel: data.nivel,
+          motivacion: data.motivacion,
+        },
+        include: { curso: true },
+      });
+      return record as Inscripcion;
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError) {
+        if (err.code === "P2002") {
+          throw new ConflictError("Ya estás inscrito en este curso", [
+            { field: "cursoId", message: "Ya existe una inscripción para este curso" },
+          ]);
+        }
+        if (err.code === "P2003") {
+          throw new ConflictError(
+            "El curso o usuario indicado no existe",
+            [{ field: "cursoId", message: "Referencia a curso o usuario inválida" }]
+          );
+        }
+        if (err.code === "P2025") {
+          throw new NotFoundError("Curso o usuario no encontrado");
+        }
       }
-    });
-
-    return record as Inscripcion;
+      throw err;
+    }
   }
 
   async findByUserId(userId: number, page = 1, limit = 9): Promise<{ data: Inscripcion[]; total: number }> {
