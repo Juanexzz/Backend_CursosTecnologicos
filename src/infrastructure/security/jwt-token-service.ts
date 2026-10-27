@@ -12,7 +12,7 @@ export class JwtTokenService implements ITokenService {
   }
 
   private getExpiresIn(): string {
-    return process.env["JWT_EXPIRES_IN"] ?? "24h";
+    return process.env["JWT_EXPIRES_IN"] ?? "1d";
   }
 
   generateToken(payload: TokenPayload): string {

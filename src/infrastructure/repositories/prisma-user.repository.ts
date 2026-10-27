@@ -50,8 +50,8 @@ export class PrismaUserRepository implements IUserRepository {
         err.code === "P2002"
       ) {
         throw new ConflictError(
-          "El correo electrónico ya se encuentra registrado",
-          [{ field: "email", message: "Este correo ya está registrado en la plataforma" }]
+          "El email ya se encuentra registrado",
+          [{ field: "email", message: "Este email ya está registrado" }]
         );
       }
       throw err;

@@ -32,7 +32,7 @@ const envSchema = z.object({
 
   JWT_EXPIRES_IN: z
     .string()
-    .default("24h"),
+    .default("1d"),
 
   // Lista de orígenes permitidos separada por comas (ej: "http://localhost:3000,https://mi-app.vercel.app")
   CORS_ORIGIN: z

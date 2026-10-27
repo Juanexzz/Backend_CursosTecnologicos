@@ -20,8 +20,8 @@ export class RegisterUserUseCase {
     const existing = await this.userRepository.findByEmail(cleanEmail);
 
     if (existing) {
-      throw new ConflictError("El correo electrónico ya se encuentra registrado", [
-        { field: "email", message: "Este correo electrónico ya está registrado en la plataforma" }
+      throw new ConflictError("El email ya se encuentra registrado", [
+        { field: "email", message: "Este email ya está registrado" }
       ]);
     }
 
