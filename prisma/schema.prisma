@@ -26,32 +26,33 @@ model User {
 }
 
 model Curso {
-  id                    Int           @id @default(autoincrement())
-  titulo                String
-  slug                  String        @unique
-  categoria             String
-  categoriaNombre       String
-  nivel                 String
-  duracionHoras         Int
-  precio                Int
-  calificacion          Float
-  totalResenas          Int           @default(0)
-  estudiantes           Int           @default(0)
-  instructorNombre      String
+  id                     Int           @id @default(autoincrement())
+  titulo                 String
+  slug                   String        @unique
+  categoria              String
+  categoriaNombre        String
+  nivel                  String
+  duracionHoras          Int
+  precio                 Int
+  calificacion           Float
+  totalResenas           Int           @default(0)
+  estudiantes            Int           @default(0)
+  instructorNombre       String
   instructorEspecialidad String
-  instructorAvatar      String
-  instructorBio         String
-  destacado             Boolean       @default(false)
-  imagen                String
-  tecnologias           String[]
-  descripcionCorta      String
-  descripcionLarga      String
-  requisitos            String[]
-  temario               String[]
-  createdAt             DateTime      @default(now())
-  updatedAt             DateTime      @updatedAt
-  inscripciones         Inscripcion[]
+  instructorAvatar       String
+  instructorBio          String        @db.Text
+  destacado              Boolean       @default(false)
+  imagen                 String
+  tecnologias            String[]
+  descripcionCorta       String        @db.Text
+  descripcionLarga       String        @db.Text
+  requisitos             String[]
+  temario                String[]
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+  inscripciones          Inscripcion[]
 
+  @@index([categoria])
   @@map("cursos")
 }
 
@@ -61,12 +62,14 @@ model Inscripcion {
   cursoId    Int
   telefono   String
   nivel      String
-  motivacion String
+  motivacion String   @db.Text
   createdAt  DateTime @default(now())
 
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  curso Curso @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Restrict)
+  curso Curso @relation(fields: [cursoId], references: [id], onDelete: Restrict)
 
   @@unique([userId, cursoId])
+  @@index([userId])
+  @@index([cursoId])
   @@map("inscripciones")
 }
