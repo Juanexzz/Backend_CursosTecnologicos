@@ -12,6 +12,7 @@ import { JwtTokenService } from "./infrastructure/security/jwt-token-service.js"
 
 import { RegisterUserUseCase } from "./application/use-cases/auth/register-user.use-case.js";
 import { LoginUserUseCase } from "./application/use-cases/auth/login-user.use-case.js";
+import { GetCurrentUserUseCase } from "./application/use-cases/auth/get-current-user.use-case.js";
 import { ListCursosUseCase } from "./application/use-cases/cursos/list-cursos.use-case.js";
 import { GetCursoByIdUseCase } from "./application/use-cases/cursos/get-curso-by-id.use-case.js";
 import { CreateCursoUseCase } from "./application/use-cases/cursos/create-curso.use-case.js";
@@ -35,6 +36,7 @@ export const tokenService = new JwtTokenService();
 // 2. Casos de uso — Auth
 export const registerUserUseCase = new RegisterUserUseCase(userRepository, passwordHasher);
 export const loginUserUseCase = new LoginUserUseCase(userRepository, passwordHasher, tokenService);
+export const getCurrentUserUseCase = new GetCurrentUserUseCase(userRepository);
 
 // Casos de uso — Cursos
 export const listCursosUseCase = new ListCursosUseCase(cursoRepository);
@@ -49,7 +51,11 @@ export const listMyInscripcionesUseCase = new ListMyInscripcionesUseCase(inscrip
 export const listAllInscripcionesUseCase = new ListAllInscripcionesUseCase(inscripcionRepository);
 
 // 3. Controladores
-export const authController = new AuthController(registerUserUseCase, loginUserUseCase);
+export const authController = new AuthController(
+  registerUserUseCase,
+  loginUserUseCase,
+  getCurrentUserUseCase
+);
 export const cursoController = new CursoController(
   listCursosUseCase,
   getCursoByIdUseCase,
