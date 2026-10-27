@@ -1,0 +1,72 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  admin
+  user
+}
+
+model User {
+  id            Int           @id @default(autoincrement())
+  nombre        String
+  email         String        @unique
+  password      String
+  role          Role          @default(user)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  inscripciones Inscripcion[]
+
+  @@map("users")
+}
+
+model Curso {
+  id                    Int           @id @default(autoincrement())
+  titulo                String
+  slug                  String        @unique
+  categoria             String
+  categoriaNombre       String
+  nivel                 String
+  duracionHoras         Int
+  precio                Int
+  calificacion          Float
+  totalResenas          Int           @default(0)
+  estudiantes           Int           @default(0)
+  instructorNombre      String
+  instructorEspecialidad String
+  instructorAvatar      String
+  instructorBio         String
+  destacado             Boolean       @default(false)
+  imagen                String
+  tecnologias           String[]
+  descripcionCorta      String
+  descripcionLarga      String
+  requisitos            String[]
+  temario               String[]
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  inscripciones         Inscripcion[]
+
+  @@map("cursos")
+}
+
+model Inscripcion {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  cursoId    Int
+  telefono   String
+  nivel      String
+  motivacion String
+  createdAt  DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  curso Curso @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, cursoId])
+  @@map("inscripciones")
+}
