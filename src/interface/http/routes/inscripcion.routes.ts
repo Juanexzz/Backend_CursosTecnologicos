@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { InscripcionController } from "../controllers/inscripcion.controller.js";
 import { inscripcionController as defaultController } from "../../../container.js";
-import { authMiddleware } from "../middlewares/auth.middleware.js";
+import { authenticate } from "../middlewares/auth.middleware.js";
 import { soloAdmin } from "../middlewares/role.middleware.js";
 import { validate } from "../middlewares/validate.middleware.js";
 import { createInscripcionSchema, paginationQuerySchema } from "../schemas/inscripcion.schema.js";
@@ -12,7 +12,7 @@ export function createInscripcionRouter(controller: InscripcionController = defa
   // IMPORTANTE: /mias se declara antes que cualquier parámetro :id
   router.get(
     "/mias",
-    authMiddleware,
+    authenticate,
     validate(paginationQuerySchema, "query"),
     controller.listMine
   );
@@ -20,7 +20,7 @@ export function createInscripcionRouter(controller: InscripcionController = defa
   // Crear inscripción (usuario autenticado)
   router.post(
     "/",
-    authMiddleware,
+    authenticate,
     validate(createInscripcionSchema),
     controller.create
   );
@@ -28,7 +28,7 @@ export function createInscripcionRouter(controller: InscripcionController = defa
   // Listar todas las inscripciones (solo admin)
   router.get(
     "/",
-    authMiddleware,
+    authenticate,
     soloAdmin,
     validate(paginationQuerySchema, "query"),
     controller.listAll

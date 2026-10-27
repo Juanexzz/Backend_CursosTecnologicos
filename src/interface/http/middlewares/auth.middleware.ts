@@ -43,4 +43,5 @@ export function createAuthMiddleware(tokenService: ITokenService = defaultTokenS
   };
 }
 
-export const authMiddleware = createAuthMiddleware();
+export const authenticate = createAuthMiddleware();
+export const authMiddleware = authenticate;
