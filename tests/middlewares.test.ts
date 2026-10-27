@@ -3,6 +3,54 @@ import { Request, Response, NextFunction } from "express";
 import { createAuthMiddleware } from "../src/interface/http/middlewares/auth.middleware.js";
 import { requireRole } from "../src/interface/http/middlewares/role.middleware.js";
 import { ITokenService, TokenPayload } from "../src/domain/services/token-service.interface.js";
+import request from "supertest";
+import express from "express";
+import jwt from "jsonwebtoken";
+import { CursoController } from "../src/interface/http/controllers/curso.controller.js";
+import { ImagenCursoController } from "../src/interface/http/controllers/imagen-curso.controller.js";
+
+// Mockeamos el container para evitar que Prisma intente conectar a la BD en tests
+vi.mock("../src/container.js", () => ({
+  cursoController: {},
+  imagenCursoController: {},
+  inscripcionController: {},
+  authController: {},
+  tokenService: {},
+}));
+
+const { createCursoRouter } = await import("../src/interface/http/routes/curso.routes.js");
+
+function buildTestToken(payload: TokenPayload): string {
+  const secret = process.env["JWT_SECRET"] ?? "test-secret-de-al-menos-32-caracteres-ok!!";
+  return jwt.sign(payload, secret, { algorithm: "HS256", expiresIn: "1h" });
+}
+
+function makeMockCursoController(): CursoController {
+  return {
+    list: vi.fn(),
+    getById: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  } as unknown as CursoController;
+}
+
+function makeMockImagenController(): ImagenCursoController {
+  return {
+    upload: vi.fn(),
+    serve: vi.fn(),
+  } as unknown as ImagenCursoController;
+}
+
+function buildTestApp() {
+  const app = express();
+  app.use(express.json());
+  app.use(
+    "/api/cursos",
+    createCursoRouter(makeMockCursoController(), makeMockImagenController())
+  );
+  return app;
+}
 
 describe("Pruebas del AuthMiddleware", () => {
   it("debe responder 401 si no se envía la cabecera Authorization", () => {
@@ -169,5 +217,24 @@ describe("Pruebas del RoleMiddleware", () => {
 
     expect(next).toHaveBeenCalledTimes(1);
     expect(res.status).not.toHaveBeenCalled();
+  });
+});
+
+describe("DELETE /api/cursos/:id — autenticación y autorización", () => {
+  const app = buildTestApp();
+
+  it("debe responder 401 si no se envía token", async () => {
+    const res = await request(app).delete("/api/cursos/1");
+    expect(res.status).toBe(401);
+    expect(res.body).toHaveProperty("message");
+  });
+
+  it("debe responder 403 si el token pertenece a un usuario con rol 'user'", async () => {
+    const token = buildTestToken({ id: 99, role: "user" });
+    const res = await request(app)
+      .delete("/api/cursos/1")
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.status).toBe(403);
+    expect(res.body).toHaveProperty("message");
   });
 });
