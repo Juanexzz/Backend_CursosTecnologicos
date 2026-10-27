@@ -23,8 +23,7 @@ export class PrismaCursoRepository implements ICursoRepository {
       const search = options.q.trim();
       where.OR = [
         { titulo: { contains: search, mode: "insensitive" } },
-        { descripcionCorta: { contains: search, mode: "insensitive" } },
-        { tecnologias: { hasSome: [search] } }
+        { descripcionCorta: { contains: search, mode: "insensitive" } }
       ];
     }
 

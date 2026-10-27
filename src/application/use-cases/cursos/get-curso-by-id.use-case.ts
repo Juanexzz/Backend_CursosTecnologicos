@@ -21,3 +21,6 @@ export class GetCursoByIdUseCase {
     return curso;
   }
 }
+
+export { GetCursoByIdUseCase as GetCursoUseCase };
+
