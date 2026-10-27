@@ -25,8 +25,8 @@ export class CreateInscripcionUseCase {
 
     const existing = await this.inscripcionRepository.findByUserAndCurso(input.userId, input.cursoId);
     if (existing) {
-      throw new ConflictError("Ya te encuentras inscrito en este curso", [
-        { field: "cursoId", message: "Ya posees una solicitud o inscripción activa para este curso" }
+      throw new ConflictError("Ya estás inscrito en este curso", [
+        { field: "cursoId", message: "Ya existe una inscripción para este curso" }
       ]);
     }
 
