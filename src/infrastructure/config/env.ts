@@ -21,6 +21,11 @@ const envSchema = z.object({
     .string()
     .min(1, "DATABASE_URL es obligatoria"),
 
+  DIRECT_URL: z
+    .string()
+    .min(1, "DIRECT_URL es obligatoria para migraciones y pooling directo")
+    .optional(),
+
   JWT_SECRET: z
     .string()
     .min(32, "JWT_SECRET debe tener al menos 32 caracteres"),
