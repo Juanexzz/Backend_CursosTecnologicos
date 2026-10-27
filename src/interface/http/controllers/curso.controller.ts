@@ -16,12 +16,13 @@ export class CursoController {
 
   list = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const q = req.query["q"] ? String(req.query["q"]) : undefined;
-      const categoria = req.query["categoria"] ? String(req.query["categoria"]) : undefined;
-      const precioMin = req.query["precioMin"] ? Number(req.query["precioMin"]) : undefined;
-      const precioMax = req.query["precioMax"] ? Number(req.query["precioMax"]) : undefined;
-      const page = req.query["page"] ? Number(req.query["page"]) : undefined;
-      const limit = req.query["limit"] ? Number(req.query["limit"]) : undefined;
+      // req.query ya fue validado y coercionado por validate(cursoQuerySchema, "query")
+      const q = req.query["q"] as string | undefined;
+      const categoria = req.query["categoria"] as string | undefined;
+      const precioMin = req.query["precioMin"] as number | undefined;
+      const precioMax = req.query["precioMax"] as number | undefined;
+      const page = req.query["page"] as number | undefined;
+      const limit = req.query["limit"] as number | undefined;
 
       const result = await this.listCursosUseCase.execute({
         q,
@@ -40,8 +41,9 @@ export class CursoController {
 
   getById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const param = String(req.params["id"]);
-      const curso = await this.getCursoByIdUseCase.execute(param);
+      // req.params.id ya pasó la validación: es un string numérico positivo
+      const id = Number(req.params["id"]);
+      const curso = await this.getCursoByIdUseCase.execute(id);
       res.status(200).json(curso);
     } catch (error) {
       next(error);

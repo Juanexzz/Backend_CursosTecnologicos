@@ -44,8 +44,9 @@ export class InscripcionController {
         throw new UnauthorizedError("Debes iniciar sesión para consultar tus inscripciones");
       }
 
-      const page = req.query["page"] ? Number(req.query["page"]) : 1;
-      const limit = req.query["limit"] ? Number(req.query["limit"]) : 9;
+      // req.query ya fue validado y coercionado por validate(paginationQuerySchema, "query")
+      const page = (req.query["page"] as number | undefined) ?? 1;
+      const limit = (req.query["limit"] as number | undefined) ?? 9;
 
       const result = await this.listMyInscripcionesUseCase.execute(req.user.id, page, limit);
       res.status(200).json(result);
@@ -56,8 +57,9 @@ export class InscripcionController {
 
   listAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const page = req.query["page"] ? Number(req.query["page"]) : 1;
-      const limit = req.query["limit"] ? Number(req.query["limit"]) : 9;
+      // req.query ya fue validado y coercionado por validate(paginationQuerySchema, "query")
+      const page = (req.query["page"] as number | undefined) ?? 1;
+      const limit = (req.query["limit"] as number | undefined) ?? 9;
 
       const result = await this.listAllInscripcionesUseCase.execute(page, limit);
       res.status(200).json(result);
