@@ -155,4 +155,19 @@ describe("Pruebas del RoleMiddleware", () => {
     expect(next).toHaveBeenCalledTimes(1);
     expect(res.status).not.toHaveBeenCalled();
   });
+
+  it("debe permitir acceso a requireRole con múltiples roles permitidos", () => {
+    const permitAll = requireRole("admin", "user");
+    const req = { user: { id: 2, role: "user" } } as Request;
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn()
+    } as unknown as Response;
+    const next = vi.fn() as NextFunction;
+
+    permitAll(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.status).not.toHaveBeenCalled();
+  });
 });

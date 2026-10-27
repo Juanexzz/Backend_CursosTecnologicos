@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { UserRole } from "../../../domain/entities/user.entity.js";
 
-export function requireRole(allowedRole: UserRole) {
+export function requireRole(...roles: UserRole[]) {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({
@@ -10,7 +10,7 @@ export function requireRole(allowedRole: UserRole) {
       return;
     }
 
-    if (req.user.role !== allowedRole) {
+    if (!roles.includes(req.user.role)) {
       res.status(403).json({
         message: "Acceso denegado: se requieren permisos de administrador para realizar esta acción."
       });
