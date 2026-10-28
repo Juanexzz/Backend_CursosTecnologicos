@@ -8,8 +8,8 @@ Este proyecto corresponde al backend del sistema web para **NexTech Academy** (p
 
 ## Enlaces de despliegue
 
-- **API Desplegada (Render / Railway):** `[MARCADOR: URL_API_DESPLIEGUE]`
-- **Frontend Desplegado (Vercel):** `[MARCADOR: URL_FRONTEND_VERCEL]`
+- **API Desplegada (Render / Railway):** [https://backend-cursostecnologicos.onrender.com](https://backend-cursostecnologicos.onrender.com)
+- **Frontend Desplegado (Vercel):** [https://frontend-cursostecnologicos.vercel.app](https://frontend-cursostecnologicos.vercel.app)
 
 ---
 
