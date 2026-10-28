@@ -15,25 +15,50 @@ Este proyecto corresponde al backend del sistema web para **NexTech Academy** (p
 
 ## Decisiones técnicas
 
-Las siguientes reflexiones corresponden a los cuatro dilemas de diseño técnico del backend:
-
 ### 1. ¿Por qué separamos el backend en cuatro capas (Domain, Application, Infrastructure, Interface) en lugar de usar la estructura clásica MVC (Model-View-Controller) de Express?
-> [ESPACIO_PARA_RESPUESTA_DEL_ESTUDIANTE]
+En la arquitectura MVC tradicional de Express, los controladores suelen acumular múltiples responsabilidades: validación de peticiones, lógica de negocio y consultas directas a la base de datos con el ORM. Esto genera un alto acoplamiento y dificulta las pruebas unitarias y el mantenimiento.
+
+Al separar el backend en cuatro capas concéntricas con regla de dependencia hacia adentro (Clean Architecture):
+- **Domain:** Alberga las entidades de negocio puras, reglas fundamentales y contratos de repositorio sin depender de ningún framework, base de datos ni librería externa.
+- **Application:** Orquesta los casos de uso específicos (`CreateCursoUseCase`, `LoginUseCase`, etc.), garantizando que la lógica del negocio sea agnóstica a la infraestructura.
+- **Infrastructure:** Aísla las dependencias externas (Prisma ORM, PostgreSQL, Supabase, bcryptjs, jsonwebtoken, etc.). Si el día de mañana se cambia la base de datos o el proveedor de autenticación, el dominio y los casos de uso permanecen intactos.
+- **Interface:** Se encarga únicamente del protocolo HTTP con Express (enrutadores, controladores y middlewares), transformando los datos entrantes (con validación de Zod) y entregando las respuestas.
+
+Esta separación facilita testear los casos de uso mediante mocks o stubs de repositorios sin levantar la base de datos y permite una clara trazabilidad de responsabilidades.
 
 ### 2. ¿Por qué las contraseñas se almacenan mediante bcrypt con salt y nunca en texto plano ni con algoritmos rápidos como SHA-256 o MD5?
-> [ESPACIO_PARA_RESPUESTA_DEL_ESTUDIANTE]
+Almacenar contraseñas en texto plano es una falta grave de seguridad: cualquier filtración accidental o acceso no autorizado a la base de datos expondría inmediatamente las credenciales de todos los usuarios.
+
+Por otro lado, funciones criptográficas rápidas como SHA-256 o MD5 fueron diseñadas para calcular sumas de verificación a alta velocidad (millones por segundo), lo que las hace extremadamente vulnerables a ataques de fuerza bruta modernos y descifrado mediante tablas de arcoíris (Rainbow Tables) utilizando tarjetas gráficas (GPUs).
+
+**Bcrypt**, en cambio:
+1. **Es intencionalmente lento y costoso computacionalmente:** Utiliza un factor de costo (`cost factor` o rondas de salt, configurado en 10-12), lo que obliga a un atacante a gastar tiempo y recursos significativos por cada intento de clave, neutralizando los ataques masivos de fuerza bruta.
+2. **Genera una sal (`salt`) criptográfica aleatoria única por usuario:** La sal se combina con la contraseña antes del hash, garantizando que dos usuarios con la misma contraseña tengan hashes totalmente distintos almacenados en la base de datos. Esto invalida por completo el uso de tablas preconocidas de arcoíris.
 
 ### 3. ¿Por qué el payload del JWT solo incluye identificadores no sensibles (`id`, `role`) y no contiene el correo electrónico, datos de perfil ni permisos detallados?
-> [ESPACIO_PARA_RESPUESTA_DEL_ESTUDIANTE]
+El payload de un token JWT firmado (JWS) está codificado en Base64Url, lo que significa que **no está cifrado**; cualquier persona o cliente que intercepte el token puede decodificarlo e inspeccionar su contenido directamente sin conocer la clave secreta.
+
+Por esta razón:
+1. **Principio de menor exposición y privacidad:** No incluir datos personales como el correo electrónico, nombres o teléfonos evita la filtración de información sensible del usuario en caso de que el token sea visible en logs de red, encabezados o herramientas de depuración.
+2. **Prevención de información obsoleta:** Si los datos del perfil o permisos cambiaran en la base de datos, un JWT con datos quemados seguiría mostrando información desactualizada hasta su expiración. Al incluir únicamente `id` y `role`, el backend puede resolver o verificar información actualizada en base de datos cuando sea estrictamente necesario.
+3. **Eficiencia y sobrecarga de red:** El token se envía en cada petición HTTP protegida a través del encabezado `Authorization: Bearer <token>`. Mantener un payload mínimo (`id` y `role`) reduce el peso de las cabeceras HTTP y el consumo de ancho de banda.
 
 ### 4. ¿Por qué es fundamental que la política de CORS verifique una lista explícita de orígenes autorizados y prohíba el uso de comodines (`*`) cuando se manejan credenciales?
-> [ESPACIO_PARA_RESPUESTA_DEL_ESTUDIANTE]
+CORS (Cross-Origin Resource Sharing) es un mecanismo de seguridad del navegador que restringe cómo una aplicación web alojada en un origen (dominio/puerto) puede solicitar recursos a una API ubicada en otro origen.
+
+1. **Incompatibilidad estricta del estándar web:** La especificación de CORS prohíbe explícitamente el uso de `Access-Control-Allow-Origin: *` cuando la petición incluye credenciales (`credentials: include` o encabezados de autorización). Si se usara `*`, los navegadores modernos bloquearían automáticamente la respuesta por seguridad.
+2. **Prevención de ataques Cross-Origin y robo de sesión:** Si una API autenticada permitiera cualquier origen con un comodín (`*`), cualquier sitio web malicioso visitado por un usuario podría ejecutar peticiones silenciosas a la API aprovechando la sesión o credenciales del usuario (ataques de tipo CSRF / cross-origin data theft).
+3. **Control explícito:** Al configurar una lista blanca estricta con `CORS_ORIGIN` (como `http://localhost:3000` en local y la URL definitiva de Vercel en producción), el backend asegura que únicamente el frontend legítimo de NexTech Academy pueda comunicarse con la API y leer las respuestas con datos sensibles.
 
 ---
 
 ## Evidencia de funcionamiento (Network)
 
-> [MARCADOR: Captura de pantalla de la pestaña Network del navegador mostrando la petición con cabecera Authorization y la respuesta del backend]
+A continuación se muestra la evidencia de la petición HTTP protegida hacia la API con el encabezado `Authorization: Bearer <token>` y la respuesta con código 200 OK del backend:
+
+![Petición de red con cabecera Authorization](docs/network-authorization.png)
+
+*(Ubicación del archivo de captura: `docs/network-authorization.png`)*
 
 ---
 
@@ -103,8 +128,8 @@ src/
 
 | Rol | Correo electrónico | Contraseña |
 |---|---|---|
-| **Administrador** | `admin@nextech.com` | `Admin123*` |
-| **Estudiante (User)**| `estudiante@nextech.com` | `User123*` |
+| **Administrador** | `admin@nextech.com` | `Admin1234!` |
+| **Estudiante (User)**| `estudiante@nextech.com` | `User1234!` |
 
 ---
 
